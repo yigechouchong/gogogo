@@ -1,1 +1,47 @@
+import warnings
+warnings.simplefilter('ignore')
+import numpy as np
+import math
+from numpy import *
+import matplotlib.pyplot as plt
+import pandas as pd
+from pandas import*
+import tushare as ts
+import time
+from datetime import datetime
+from datetime import timedelta
 
+def tu_bao(code):
+    code_bs = []
+    for c in code:
+        a = c.split('.')[1].lower() + '.' + c.split('.')[0]
+        code_bs.append(a)
+    return code_bs
+
+from tqdm import tqdm
+    
+    
+data = pro.daily(trade_date = '20200618')
+code_today = tu_bao(list(data.ts_code))
+time_today = datetime.strptime(data.trade_date[0]
+                               ,'%Y%m%d').strftime('%Y-%m-%d')
+time_lag_20 = (datetime.strptime(time_today,'%Y-%m-%d') - 
+               timedelta(weeks = 4)).strftime('%Y-%m-%d')
+code_high_today = []
+for c in tqdm(code_today):
+    try:
+        rs = bs.query_history_k_data_plus(c
+                                          ,"high,low,close,volume,pctChg"
+                                          ,start_date = time_lag_20
+                                          ,end_date = time_today
+                                          ,frequency="d"
+                                          ,adjustflag="2")
+        df = rs.get_data().iloc[::-1].astype(float)
+    except:
+        time.sleep(10)
+    if len(df) < 10:
+        continue
+    condition1 = df.close.iloc[0] >= np.percentile(df.close,90)
+    condition2 = (df.close.iloc[0]/df.close.iloc[4]-1) >= 0.1
+    if condition1 and condition2:
+        code_high_today.append(c)
